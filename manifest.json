@@ -1,18 +1,23 @@
 {
-  "background_color": "#ffffff",
-  "dir": "ltr",
-  "display": "standalone",
-  "name": "bahodur634-art.github",
-  "orientation": "portrait",
-  "scope": "/Flirt-bird/",
-  "short_name": "bahodur634-art.github",
+  "name": "Flirt Bird",
+  "short_name": "FlirtBird",
+  "description": "Simple Flappy Bird style game made with JavaScript",
   "start_url": "/Flirt-bird/index.html",
-  "theme_color": "#ffffff",
-  "lang": "en",
-  "display_override": [
-    "window-controls-overlay"
-  ],
-  "categories": [
-    "games"
+  "scope": "/Flirt-bird/",
+  "display": "standalone",
+  "background_color": "#70c5ce",
+  "theme_color": "#70c5ce",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/Flirt-bird/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Flirt-bird/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
