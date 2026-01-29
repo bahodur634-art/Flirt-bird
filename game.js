@@ -1,134 +1,200 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Птица
+// =====================
+// GAME SETTINGS
+// =====================
+const GRAVITY = 0.4;          // спокойная гравитация
+const JUMP = -7;              // мягкий прыжок
+const PIPE_SPEED = 1.6;       // спокойная скорость
+const PIPE_GAP = 150;         // УВЕЛИЧЕННЫЙ проход
+
+// =====================
+// GAME STATE
+// =====================
+let gameState = "start"; // start | play | gameover
+let score = 0;
+let bestScore = localStorage.getItem("bestScore") || 0;
+
+// =====================
+// BIRD
+// =====================
 const bird = {
-    x: 50,
-    y: 150,
-    radius: 12,
-    velocity: 0,
-    gravity: 0.5,
-    jump: -8
+  x: 80,
+  y: 200,
+  r: 12,
+  velocity: 0,
+
+  reset() {
+    this.y = 200;
+    this.velocity = 0;
+  },
+
+  draw() {
+    // тело
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // глаз
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(this.x + 4, this.y - 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  update() {
+    this.velocity += GRAVITY;
+    this.y += this.velocity;
+  }
 };
 
-// Трубы
-const pipes = [];
-const pipeWidth = 50;
-const pipeGap = 120;
-let frame = 0;
-let score = 0;
-let gameOver = false;
+// =====================
+// PIPES
+// =====================
+let pipes = [];
 
-// Управление
-document.addEventListener("keydown", jump);
-document.addEventListener("click", jump);
+function createPipe() {
+  const topHeight = Math.random() * 150 + 40;
+  pipes.push({
+    x: canvas.width,
+    top: topHeight,
+    bottom: topHeight + PIPE_GAP,
+    passed: false
+  });
+}
 
+function resetPipes() {
+  pipes = [];
+  createPipe();
+}
+
+// =====================
+// INPUT
+// =====================
 function jump() {
-    if (!gameOver) {
-        bird.velocity = bird.jump;
-    } else {
-        restartGame();
-    }
-}
-
-// Обновление игры
-function update() {
-    if (gameOver) return;
-
-    bird.velocity += bird.gravity;
-    bird.y += bird.velocity;
-
-    // Генерация труб
-    if (frame % 100 === 0) {
-        const topHeight = Math.random() * 200 + 20;
-        pipes.push({
-            x: canvas.width,
-            top: topHeight,
-            bottom: topHeight + pipeGap
-        });
-    }
-
-    // Движение труб
-    pipes.forEach(pipe => {
-        pipe.x -= 2;
-
-        // Проверка столкновений
-        if (
-            bird.x + bird.radius > pipe.x &&
-            bird.x - bird.radius < pipe.x + pipeWidth &&
-            (bird.y - bird.radius < pipe.top ||
-             bird.y + bird.radius > pipe.bottom)
-        ) {
-            gameOver = true;
-        }
-
-        // Подсчёт очков
-        if (pipe.x + pipeWidth === bird.x) {
-            score++;
-        }
-    });
-
-    // Удаление старых труб
-    if (pipes.length && pipes[0].x < -pipeWidth) {
-        pipes.shift();
-    }
-
-    // Границы экрана
-    if (bird.y + bird.radius > canvas.height || bird.y < 0) {
-        gameOver = true;
-    }
-
-    frame++;
-}
-
-// Отрисовка
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Птица
-    ctx.beginPath();
-    ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
-    ctx.fillStyle = "yellow";
-    ctx.fill();
-    ctx.closePath();
-
-    // Трубы
-    ctx.fillStyle = "green";
-    pipes.forEach(pipe => {
-        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
-        ctx.fillRect(pipe.x, pipe.bottom, pipeWidth, canvas.height);
-    });
-
-    // Очки
-    ctx.fillStyle = "#000";
-    ctx.font = "20px Arial";
-    ctx.fillText("Score: " + score, 10, 30);
-
-    // Game Over
-    if (gameOver) {
-        ctx.fillStyle = "red";
-        ctx.font = "28px Arial";
-        ctx.fillText("Game Over", 80, 220);
-        ctx.font = "16px Arial";
-        ctx.fillText("Click or Space to restart", 65, 260);
-    }
-}
-
-// Перезапуск
-function restartGame() {
-    bird.y = 150;
-    bird.velocity = 0;
-    pipes.length = 0;
+  if (gameState === "start") {
+    gameState = "play";
+    resetPipes();
     score = 0;
-    frame = 0;
-    gameOver = false;
+    bird.reset();
+  } 
+  else if (gameState === "play") {
+    bird.velocity = JUMP;
+  } 
+  else if (gameState === "gameover") {
+    gameState = "start";
+  }
 }
 
-// Игровой цикл
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") jump();
+});
+
+canvas.addEventListener("click", jump);
+
+// =====================
+// COLLISION
+// =====================
+function checkCollision(pipe) {
+  if (
+    bird.x + bird.r > pipe.x &&
+    bird.x - bird.r < pipe.x + 40 &&
+    (bird.y - bird.r < pipe.top ||
+     bird.y + bird.r > pipe.bottom)
+  ) {
+    return true;
+  }
+
+  if (bird.y + bird.r > canvas.height || bird.y - bird.r < 0) {
+    return true;
+  }
+
+  return false;
+}
+
+// =====================
+// DRAW
+// =====================
+function drawText(text, x, y, size = 20, color = "#000") {
+  ctx.fillStyle = color;
+  ctx.font = `${size}px Arial`;
+  ctx.textAlign = "center";
+  ctx.fillText(text, x, y);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  bird.draw();
+
+  pipes.forEach(pipe => {
+    ctx.fillStyle = "green";
+
+    // верхняя труба
+    ctx.fillRect(pipe.x, 0, 40, pipe.top);
+
+    // нижняя труба
+    ctx.fillRect(
+      pipe.x,
+      pipe.bottom,
+      40,
+      canvas.height - pipe.bottom
+    );
+  });
+
+  drawText(`Score: ${score}`, 60, 30, 16);
+  drawText(`Best: ${bestScore}`, 260, 30, 16);
+
+  if (gameState === "start") {
+    drawText("FLIRT BIRD", 160, 200, 28);
+    drawText("Click or Space to start", 160, 240, 16);
+  }
+
+  if (gameState === "gameover") {
+    drawText("GAME OVER", 160, 200, 26, "red");
+    drawText("Click or Space to restart", 160, 240, 16);
+  }
+}
+
+// =====================
+// UPDATE
+// =====================
+function update() {
+  if (gameState !== "play") return;
+
+  bird.update();
+
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < 160) {
+    createPipe();
+  }
+
+  pipes.forEach(pipe => {
+    pipe.x -= PIPE_SPEED;
+
+    if (!pipe.passed && pipe.x + 40 < bird.x) {
+      pipe.passed = true;
+      score++;
+    }
+
+    if (checkCollision(pipe)) {
+      gameState = "gameover";
+      bestScore = Math.max(score, bestScore);
+      localStorage.setItem("bestScore", bestScore);
+    }
+  });
+
+  pipes = pipes.filter(pipe => pipe.x + 40 > 0);
+}
+
+// =====================
+// GAME LOOP
+// =====================
 function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
 
 loop();
