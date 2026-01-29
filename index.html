@@ -1,133 +1,101 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- Manifest -->
-<link rel="manifest" href="manifest.json">
-
-<!-- Meta теги для PWA -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Flirt Bird">
-<!-- Существующие теги -->
- <meta name="theme-color" content="#ff4081">
- <meta name="description" content="Веселая игра про птичку, которая ищет любовь!">
- <!-- Для iOS -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Flirt Bird">
-    
-<!-- Для Windows -->
-<meta name="msapplication-TileColor" content="#ff4081">
-<meta name="msapplication-TileImage" content="icons/icon-144x144.png">
-
-<!-- Иконки для разных устройств -->
-<link rel="icon" href="icons/icon-192x192.png" sizes="192x192">
-<link rel="apple-touch-icon" href="icons/icon-192x192.png">
-<link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
-
-<!-- Регистрация Service Worker -->
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('Service Worker зарегистрирован:', reg))
-      .catch(err => console.log('Ошибка регистрации Service Worker:', err));
-  }
-</script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flirt Bird Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ff4081">
+    <meta name="description" content="Flirt Bird - увлекательная игра про птичку, которая летает и собирает сердечки">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Flirt Bird">
+    <meta name="msapplication-TileColor" content="#ff4081">
+    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+    
+    <title>Flirt Bird</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192x192.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
             user-select: none;
         }
 
         body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #ffafbd, #ffc3a0);
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            overflow: hidden;
-            padding: 20px;
+            touch-action: manipulation;
         }
 
         .game-container {
+            width: 100%;
+            height: 100vh;
             position: relative;
-            width: 800px;
-            max-width: 95%;
-            text-align: center;
+            overflow: hidden;
         }
 
-        h1 {
-            color: #ff4081;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 0 #ff99cc;
-            font-size: 2.8em;
-            letter-spacing: 2px;
-        }
-
-        .subtitle {
-            color: #d81b60;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-        }
-
-        #gameCanvas {
-            background: linear-gradient(to bottom, #87CEEB 60%, #98FB98 100%);
-            border-radius: 20px;
-            border: 8px solid #ff4081;
-            box-shadow: 0 15px 35px rgba(255, 64, 129, 0.4);
+        canvas {
             display: block;
-            margin: 0 auto;
-            cursor: pointer;
+            background: linear-gradient(to bottom, #87CEEB 60%, #98FB98 100%);
+            width: 100%;
+            height: 100%;
+            touch-action: none;
         }
 
-        .stats {
+        .score-display {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
             display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
+            justify-content: space-around;
+            z-index: 10;
+            padding: 0 10px;
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
             border-radius: 15px;
-            border: 4px solid #ff99cc;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 85px;
         }
 
-        .stat-box {
-            flex: 1;
-            margin: 0 10px;
-        }
-
-        .stat-value {
-            font-size: 2.5em;
-            color: #ff4081;
+        .score-value {
+            font-size: 24px;
             font-weight: bold;
-        }
-
-        .stat-label {
-            color: #d81b60;
-            font-size: 1em;
-        }
-
-        .controls {
-            margin-top: 20px;
-            color: #5a0035;
-            font-size: 1.1em;
-            line-height: 1.6;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 15px;
-            border-radius: 15px;
-        }
-
-        .hearts {
-            font-size: 1.8em;
-            letter-spacing: 5px;
-            margin: 10px 0;
             color: #ff4081;
+            display: block;
+        }
+
+        .score-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .game-title {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            text-shadow: 3px 3px 0 rgba(255, 64, 129, 0.5);
+            font-size: 32px;
+            z-index: 10;
         }
 
         .game-over {
@@ -135,99 +103,239 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 25px;
             border-radius: 20px;
-            border: 6px solid #ff4081;
-            box-shadow: 0 0 40px rgba(255, 64, 129, 0.7);
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: none;
-            z-index: 10;
-            min-width: 300px;
+            z-index: 100;
+            width: 90%;
+            max-width: 350px;
+            border: 4px solid #ff4081;
         }
 
         .game-over h2 {
             color: #ff4081;
-            margin-bottom: 20px;
-            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-size: 28px;
         }
 
-        button {
+        .final-stats {
+            margin: 15px 0;
+            font-size: 18px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .restart-btn {
             background: linear-gradient(to bottom, #ff4081, #d81b60);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.3em;
-            border-radius: 50px;
+            padding: 18px 30px;
+            font-size: 22px;
+            border-radius: 45px;
             cursor: pointer;
-            margin-top: 20px;
-            font-family: inherit;
+            margin-top: 15px;
             font-weight: bold;
-            letter-spacing: 1px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4);
+            letter-spacing: 0.5px;
+            width: 100%;
+            box-shadow: 0 8px 20px rgba(216, 27, 96, 0.3);
+            transition: transform 0.2s;
         }
 
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(216, 27, 96, 0.6);
+        .restart-btn:active {
+            transform: scale(0.95);
         }
 
-        .flirt-message {
+        .tap-hint {
             position: absolute;
-            color: #ff4081;
-            font-weight: bold;
-            font-size: 1.2em;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s, transform 0.5s;
-            text-shadow: 1px 1px 2px white;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+            z-index: 10;
+            background: rgba(0,0,0,0.4);
+            padding: 12px;
+            border-radius: 20px;
+            margin: 0 15px;
+            backdrop-filter: blur(5px);
         }
 
-@media (max-width: 600px) {
-            h1 { font-size: 2em; }
-            .stat-value { font-size: 2em; }
-            #gameCanvas { width: 100%; }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .hearts-display {
+            position: absolute;
+            top: 130px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 36px;
+            color: #ff4081;
+            z-index: 10;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .score-value { font-size: 22px; }
+            .game-title { font-size: 28px; top: 60px; }
+            .game-over h2 { font-size: 26px; }
+            .restart-btn { padding: 16px 25px; font-size: 20px; }
+            .hearts-display { font-size: 32px; top: 110px; }
+        }
+
+        @media (max-width: 480px) {
+            .score-item {
+                padding: 6px 12px;
+                min-width: 75px;
+            }
+            .score-value { font-size: 20px; }
+            .score-label { font-size: 10px; }
+            .game-title { font-size: 24px; top: 50px; }
+            .game-over { padding: 20px; }
+            .game-over h2 { font-size: 22px; }
+            .restart-btn { padding: 14px 20px; font-size: 18px; }
+            .tap-hint { font-size: 16px; bottom: 30px; }
+            .hearts-display { font-size: 28px; top: 100px; }
+        }
+
+        @media (max-height: 600px) {
+            .score-display { top: 10px; }
+            .game-title { top: 40px; font-size: 22px; }
+            .hearts-display { top: 80px; font-size: 26px; }
+            .tap-hint { bottom: 20px; font-size: 14px; }
+        }
+
+        .heart-collect {
+            position: absolute;
+            font-size: 28px;
+            color: #ff4081;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-40px);
+                opacity: 0;
+            }
+        }
+
+        .jump-effect {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            animation: expand 0.3s ease-out forwards;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes expand {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 20px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text">Загрузка игры...</div>
+    </div>
+
     <div class="game-container">
-        <h1>💖 FLIRT BIRD 💖</h1>
-        <div class="subtitle">Поймай сердечки и избегай препятствий!</div>
-        
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
-        
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-value" id="score">0</div>
-                <div class="stat-label">СЧЕТ</div>
+        <div class="score-display">
+            <div class="score-item">
+                <span class="score-value" id="score">0</span>
+                <span class="score-label">СЧЕТ</span>
             </div>
-            <div class="stat-box">
-                <div class="stat-value" id="highScore">0</div>
-                <div class="stat-label">РЕКОРД</div>
+            <div class="score-item">
+                <span class="score-value" id="highScore">0</span>
+                <span class="score-label">РЕКОРД</span>
             </div>
-            <div class="stat-box">
-                <div class="stat-value" id="heartsCount">0</div>
-                <div class="stat-label">СЕРДЕЧКИ</div>
+            <div class="score-item">
+                <span class="score-value" id="heartsCount">0</span>
+                <span class="score-label">СЕРДЕЧКИ</span>
             </div>
         </div>
+
+        <div class="game-title">FLIRT BIRD</div>
         
-        <div class="controls">
-            <p><strong>Управление:</strong> Нажми ЛЮБУЮ КЛАВИШУ, ПРОБЕЛ, или КЛИКНИ мышкой чтобы подпрыгнуть</p>
-            <p>Собирай сердечки ❤️ за дополнительные очки и избегай розовые препятствия!</p>
-            <div class="hearts">❤️ ❤️ ❤️ ❤️ ❤️</div>
-        </div>
-        
+        <div class="hearts-display" id="heartsUI">❤️ ❤️ ❤️ ❤️ ❤️</div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="tap-hint">ТАПНИ, ЧТОБЫ ПРЫГНУТЬ!</div>
+
         <div class="game-over" id="gameOverScreen">
-            <h2>ИГРА ОКОНЧЕНА!</h2>
-            <p>Твой счет: <span id="finalScore">0</span></p>
-            <p>Рекорд: <span id="finalHighScore">0</span></p>
-            <p>Собранно сердец: <span id="finalHearts">0</span></p>
-            <button id="restartButton">ИГРАТЬ СНОВА</button>
+            <h2>ИГРА ОКОНЧЕНА</h2>
+            <div class="final-stats">
+                <div>Твой счет: <span id="finalScore">0</span></div>
+                <div>Рекорд: <span id="finalHighScore">0</span></div>
+                <div>Собрано сердец: <span id="finalHearts">0</span></div>
+            </div>
+            <button class="restart-btn" id="restartButton">ИГРАТЬ СНОВА</button>
         </div>
     </div>
 
     <script>
+        // Скрываем экран загрузки когда все готово
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 300);
+            }, 500);
+        });
+
         // Получаем элементы
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -239,17 +347,35 @@
         const finalHighScoreElement = document.getElementById('finalHighScore');
         const finalHeartsElement = document.getElementById('finalHearts');
         const restartButton = document.getElementById('restartButton');
+        const heartsUI = document.getElementById('heartsUI');
+        const tapHint = document.querySelector('.tap-hint');
+
+        // Настройка canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            bird.width = Math.max(30, canvas.width * 0.06);
+            bird.height = Math.max(25, canvas.width * 0.05);
+            bird.x = canvas.width * 0.15;
+            
+            pipeGap = Math.max(120, canvas.height * 0.25);
+            pipeWidth = Math.max(60, canvas.width * 0.08);
+            
+            if (gameRunning && !gameStarted) {
+                tapHint.style.display = 'none';
+            }
+        }
 
         // Игровые переменные
         let bird = {
             x: 100,
-            y: canvas.height / 2,
+            y: 300,
             width: 40,
             height: 30,
             velocity: 0,
             gravity: 0.5,
-            jump: -10,
-            color: '#FF4081'
+            jump: -12
         };
 
         let pipes = [];
@@ -258,26 +384,21 @@
         let highScore = localStorage.getItem('flirtBirdHighScore') || 0;
         let heartsCount = 0;
         let gameRunning = true;
-        let pipeInterval = 90;
+        let gameStarted = false;
+        let pipeInterval = 80;
         let frameCount = 0;
-        let flirtMessages = [
-            "Он милашка!",
-            "Поймал мое сердце!",
-            "Ого, как ловко!",
-            "Он самый лучший!",
-            "Мое сердце твое!",
-            "Он умный!",
-            "<Баходур молодец!"
-        ];
+        let pipeWidth = 70;
+        let pipeGap = 150;
+        let lastTapTime = 0;
+        const tapDelay = 300;
 
-        // Установка рекорда
         highScoreElement.textContent = highScore;
 
-        // Создание препятствий (трубы)
+        // Создание препятствий
         function createPipe() {
-            const pipeGap = 180;
-            const pipeWidth = 50;
-            const topPipeHeight = Math.floor(Math.random() * (canvas.height - pipeGap - 100)) + 50;
+            const minHeight = canvas.height * 0.1;
+            const maxHeight = canvas.height - pipeGap - minHeight;
+            const topPipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
             
             pipes.push({
                 x: canvas.width,
@@ -298,233 +419,255 @@
             });
         }
 
-// Создание сердечек
+        // Создание сердечек
         function createHeart() {
-            hearts.push({
-                x: canvas.width,
-                y: Math.floor(Math.random() * (canvas.height - 100)) + 50,
-                radius: 15,
-                color: '#FF4081'
-            });
+            if (Math.random() > 0.6 && pipes.length > 0) {
+                const lastPipe = pipes[pipes.length - 2];
+                hearts.push({
+                    x: lastPipe.x + lastPipe.width / 2,
+                    y: lastPipe.height + pipeGap / 2,
+                    radius: Math.min(15, canvas.width * 0.03),
+                    color: '#FF4081',
+                    collected: false
+                });
+            }
         }
 
-        // Прыжок птички
-        function jump() {
+        // Прыжок
+        function jump(e) {
+            const currentTime = Date.now();
+            if (currentTime - lastTapTime < tapDelay) return;
+            lastTapTime = currentTime;
+
             if (!gameRunning) return;
+            
+            gameStarted = true;
+            tapHint.style.display = 'none';
+            
             bird.velocity = bird.jump;
             
-            // Создаем flirt сообщение
-            const message = document.createElement('div');
-            message.className = 'flirt-message';
-            message.textContent = flirtMessages[Math.floor(Math.random() * flirtMessages.length)];
-            message.style.left = bird.x + 'px';
-            message.style.top = (bird.y - 30) + 'px';
-            document.body.appendChild(message);
-            
-            // Анимация появления и исчезновения
-            setTimeout(() => {
-                message.style.opacity = '1';
-                message.style.transform = 'translateY(-30px)';
-            }, 10);
-            
-            setTimeout(() => {
-                message.style.opacity = '0';
-                message.style.transform = 'translateY(-60px)';
-                setTimeout(() => message.remove(), 500);
-            }, 1500);
+            // Эффект прыжка
+            if (e && e.type === 'touchstart') {
+                const touch = e.touches[0];
+                createJumpEffect(touch.clientX, touch.clientY);
+            } else if (e) {
+                createJumpEffect(e.clientX, e.clientY);
+            }
         }
 
-        // Обработчики управления
-        document.addEventListener('keydown', jump);
-        canvas.addEventListener('click', jump);
-        restartButton.addEventListener('click', restartGame);
-
-        // Основной игровой цикл
-        function gameLoop() {
-            // Очистка canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Эффект прыжка
+        function createJumpEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'jump-effect';
+            effect.style.left = (x - 25) + 'px';
+            effect.style.top = (y - 25) + 'px';
+            document.body.appendChild(effect);
             
-            // Обновление позиции птички
-            if (gameRunning) {
-                bird.velocity += bird.gravity;
-                bird.y += bird.velocity;
-                
-                // Проверка границ
-                if (bird.y <= 0) {
-                    bird.y = 0;
-                    bird.velocity = 0;
-                }
-                
-                if (bird.y + bird.height >= canvas.height) {
-                    gameOver();
-                }
-                
-                // Создание препятствий и сердечек
-                frameCount++;
-                if (frameCount % pipeInterval === 0) {
-                    createPipe();
-                    if (Math.random() > 0.7) createHeart();
-                }
-                
-                // Обновление препятствий
-                for (let i = pipes.length - 1; i >= 0; i--) {
-                    pipes[i].x -= 3;
-                    
-                    // Проверка столкновений
-                    if (
-                        bird.x < pipes[i].x + pipes[i].width &&
-                        bird.x + bird.width > pipes[i].x &&
-                        bird.y < pipes[i].y + pipes[i].height &&
-                        bird.y + bird.height > pipes[i].y
-                    ) {
-                        gameOver();
-                    }
-                    
-                    // Удаление препятствий за пределами экрана
-                    if (pipes[i].x + pipes[i].width < 0) {
-                        pipes.splice(i, 1);
-                    }
-                    
-                    // Добавление очков при прохождении препятствий
-                    if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
-                        pipes[i].passed = true;
-                        if (i % 2 === 0) {
-                            score += 5;
-                            scoreElement.textContent = score;
-                        }
-                    }
-                }
-                
-                // Обновление сердечек
-                for (let i = hearts.length - 1; i >= 0; i--) {
-                    hearts[i].x -= 3;
-                    
-                    // Проверка сбора сердечек
+            setTimeout(() => effect.remove(), 300);
+        }
 
-const dx = bird.x + bird.width/2 - hearts[i].x;
-                    const dy = bird.y + bird.height/2 - hearts[i].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < bird.width/2 + hearts[i].radius) {
-                        heartsCount++;
-                        heartsCountElement.textContent = heartsCount;
-                        score += 20;
-                        scoreElement.textContent = score;
-                        hearts.splice(i, 1);
-                        continue;
-                    }
-                    
-                    // Удаление сердечек за пределами экрана
-                    if (hearts[i].x + hearts[i].radius < 0) {
-                        hearts.splice(i, 1);
-                    }
-                }
-                
-                // Увеличение сложности
-                if (score > 100 && pipeInterval > 60) {
-                    pipeInterval = 60;
-                } else if (score > 50 && pipeInterval > 70) {
-                    pipeInterval = 70;
-                } else if (score > 20 && pipeInterval > 80) {
-                    pipeInterval = 80;
-                }
+        // Эффект сбора сердечка
+        function createHeartEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'heart-collect';
+            effect.textContent = '❤️ +20';
+            effect.style.left = (x - 30) + 'px';
+            effect.style.top = (y - 30) + 'px';
+            document.body.appendChild(effect);
+            
+            updateHeartsUI();
+            
+            setTimeout(() => effect.remove(), 1000);
+        }
+
+        // Обновление UI сердечек
+        function updateHeartsUI() {
+            let heartsText = '';
+            const totalHearts = Math.min(10, heartsCount);
+            for (let i = 0; i < totalHearts; i++) {
+                heartsText += '❤️ ';
+            }
+            heartsUI.textContent = heartsText || '❤️';
+        }
+
+        // Обновление игры
+        function update() {
+            if (!gameRunning) return;
+
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+
+            if (bird.y <= 0) {
+                bird.y = 0;
+                bird.velocity = 0;
             }
             
-            // Отрисовка птички
-            ctx.fillStyle = bird.color;
+            if (bird.y + bird.height >= canvas.height) {
+                gameOver();
+                return;
+            }
+
+            frameCount++;
+            if (frameCount % pipeInterval === 0) {
+                createPipe();
+                createHeart();
+            }
+
+            // Обновление препятствий
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].x -= 4;
+
+                if (
+                    bird.x < pipes[i].x + pipes[i].width &&
+                    bird.x + bird.width > pipes[i].x &&
+                    bird.y < pipes[i].y + pipes[i].height &&
+                    bird.y + bird.height > pipes[i].y
+                ) {
+                    gameOver();
+                    return;
+                }
+
+                if (pipes[i].x + pipes[i].width < 0) {
+                    pipes.splice(i, 1);
+                }
+
+                if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
+                    pipes[i].passed = true;
+                    if (i % 2 === 0) {
+                        score += 5;
+                        scoreElement.textContent = score;
+                    }
+                }
+            }
+
+            // Обновление сердечек
+            for (let i = hearts.length - 1; i >= 0; i--) {
+                hearts[i].x -= 4;
+
+                const dx = bird.x + bird.width/2 - hearts[i].x;
+                const dy = bird.y + bird.height/2 - hearts[i].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (!hearts[i].collected && distance < bird.width/2 + hearts[i].radius) {
+                    hearts[i].collected = true;
+                    heartsCount++;
+                    heartsCountElement.textContent = heartsCount;
+                    score += 20;
+                    scoreElement.textContent = score;
+                    
+                    createHeartEffect(hearts[i].x, hearts[i].y);
+                    
+                    hearts.splice(i, 1);
+                    continue;
+                }
+
+                if (hearts[i].x + hearts[i].radius < 0) {
+                    hearts.splice(i, 1);
+                }
+            }
+
+            if (score > 100 && pipeInterval > 50) pipeInterval = 50;
+            else if (score > 50 && pipeInterval > 60) pipeInterval = 60;
+        }
+
+        // Отрисовка
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+            ctx.fillStyle = '#98FB98';
+            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+            // Птичка
+            ctx.fillStyle = '#FF4081';
             ctx.beginPath();
-            ctx.ellipse(bird.x + bird.width/2, bird.y + bird.height/2, bird.width/2, bird.height/2, 0, 0, Math.PI * 2);
+            ctx.ellipse(
+                bird.x + bird.width/2,
+                bird.y + bird.height/2,
+                bird.width/2,
+                bird.height/2,
+                0, 0, Math.PI * 2
+            );
             ctx.fill();
-            
-            // Глаз птички
+
             ctx.fillStyle = 'white';
             ctx.beginPath();
-            ctx.arc(bird.x + bird.width - 10, bird.y + 10, 5, 0, Math.PI * 2);
+            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.15, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = 'black';
             ctx.beginPath();
-            ctx.arc(bird.x + bird.width - 10, bird.y + 10, 2, 0, Math.PI * 2);
+            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.07, 0, Math.PI * 2);
             ctx.fill();
-            
-            // Клюв
+
             ctx.fillStyle = '#FF9800';
             ctx.beginPath();
             ctx.moveTo(bird.x + bird.width, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width + 15, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width, bird.y + bird.height/2 + 8);
+            ctx.lineTo(bird.x + bird.width + bird.width * 0.4, bird.y + bird.height/2);
+            ctx.lineTo(bird.x + bird.width, bird.y + bird.height/2 + bird.height * 0.3);
             ctx.fill();
-            
-            // Отрисовка препятствий
+
+            // Препятствия
             pipes.forEach(pipe => {
                 ctx.fillStyle = pipe.color;
                 ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
                 
-                // Украшение препятствий
                 ctx.fillStyle = '#FF4081';
                 ctx.fillRect(pipe.x - 5, pipe.y, 10, pipe.height);
                 ctx.fillRect(pipe.x + pipe.width - 5, pipe.y, 10, pipe.height);
             });
-            
-            // Отрисовка сердечек
+
+            // Сердечки
             hearts.forEach(heart => {
                 ctx.fillStyle = heart.color;
                 ctx.beginPath();
                 
-                // Рисуем сердечко
-                const topCurveHeight = heart.radius * 0.8;
-                ctx.moveTo(heart.x, heart.y + topCurveHeight);
+                const topCurve = heart.radius * 0.8;
+                ctx.moveTo(heart.x, heart.y + topCurve);
                 
-                // Левая верхняя кривая
                 ctx.bezierCurveTo(
                     heart.x, heart.y,
                     heart.x - heart.radius, heart.y,
-                    heart.x - heart.radius, heart.y + topCurveHeight
+                    heart.x - heart.radius, heart.y + topCurve
                 );
-                
-                // Левая нижняя кривая
                 ctx.bezierCurveTo(
-                    heart.x - heart.radius, heart.y + (heart.radius * 1.5),
-                    heart.x, heart.y + (heart.radius * 1.8),
-                    heart.x, heart.y + (heart.radius * 2.5)
+                    heart.x - heart.radius, heart.y + heart.radius * 1.5,
+                    heart.x, heart.y + heart.radius * 1.8,
+                    heart.x, heart.y + heart.radius * 2.5
                 );
-                
-                // Правая нижняя кривая
                 ctx.bezierCurveTo(
-                    heart.x, heart.y + (heart.radius * 1.8),
-                    heart.x + heart.radius, heart.y + (heart.radius * 1.5),
-
-heart.x + heart.radius, heart.y + topCurveHeight
+                    heart.x, heart.y + heart.radius * 1.8,
+                    heart.x + heart.radius, heart.y + heart.radius * 1.5,
+                    heart.x + heart.radius, heart.y + topCurve
                 );
-                
-                // Правая верхняя кривая
                 ctx.bezierCurveTo(
                     heart.x + heart.radius, heart.y,
                     heart.x, heart.y,
-                    heart.x, heart.y + topCurveHeight
+                    heart.x, heart.y + topCurve
                 );
                 
                 ctx.fill();
             });
-            
-            // Облака на фоне
+
             drawClouds();
-            
-            requestAnimationFrame(gameLoop);
         }
 
-        // Отрисовка облаков
+        // Облака
         function drawClouds() {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             
-            // Несколько статичных облаков
             const clouds = [
-                {x: 200, y: 80, size: 30},
-                {x: 450, y: 120, size: 40},
-                {x: 700, y: 60, size: 35},
-                {x: 100, y: 150, size: 25}
+                {x: canvas.width * 0.2, y: canvas.height * 0.1, size: canvas.width * 0.05},
+                {x: canvas.width * 0.6, y: canvas.height * 0.15, size: canvas.width * 0.06},
+                {x: canvas.width * 0.8, y: canvas.height * 0.05, size: canvas.width * 0.04}
             ];
             
             clouds.forEach(cloud => {
+                if (cloud.x < -cloud.size * 3) {
+                    cloud.x = canvas.width + cloud.size;
+                }
+                cloud.x -= 0.5;
+                
                 ctx.beginPath();
                 ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
                 ctx.arc(cloud.x + cloud.size * 0.8, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
@@ -540,21 +683,19 @@ heart.x + heart.radius, heart.y + topCurveHeight
             
             gameRunning = false;
             
-            // Обновление рекорда
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('flirtBirdHighScore', highScore);
                 highScoreElement.textContent = highScore;
             }
             
-            // Показ экрана окончания игры
             finalScoreElement.textContent = score;
             finalHighScoreElement.textContent = highScore;
             finalHeartsElement.textContent = heartsCount;
             gameOverScreen.style.display = 'block';
         }
 
-        // Перезапуск игры
+        // Перезапуск
         function restartGame() {
             bird.y = canvas.height / 2;
             bird.velocity = 0;
@@ -563,38 +704,91 @@ heart.x + heart.radius, heart.y + topCurveHeight
             score = 0;
             heartsCount = 0;
             gameRunning = true;
-            pipeInterval = 90;
+            gameStarted = false;
+            pipeInterval = 80;
             frameCount = 0;
             
             scoreElement.textContent = score;
             heartsCountElement.textContent = heartsCount;
             gameOverScreen.style.display = 'none';
+            
+            tapHint.style.display = 'block';
+            tapHint.style.animation = 'pulse 2s infinite';
+            
+            updateHeartsUI();
         }
 
-        // Запуск игры
-        gameLoop();
-        
-        // Стартовое сообщение
-        setTimeout(() => {
-            const startMessage = document.createElement('div');
-            startMessage.className = 'flirt-message';
-            startMessage.textContent = 'Лети, моя птичка!';
-            startMessage.style.left = '50%';
-            startMessage.style.top = '50%';
-            startMessage.style.transform = 'translate(-50%, -50%)';
-            startMessage.style.fontSize = '1.5em';
-            document.body.appendChild(startMessage);
+        // Игровой цикл
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Обработчики событий
+        function setupEventListeners() {
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                jump(e);
+            });
+            
+            canvas.addEventListener('click', jump);
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    jump();
+                }
+            });
+            
+            restartButton.addEventListener('click', restartGame);
+            
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+                if (gameRunning) {
+                    bird.y = Math.min(bird.y, canvas.height - bird.height);
+                }
+            });
+            
+            canvas.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Инициализация
+        function init() {
+            resizeCanvas();
+            setupEventListeners();
+            gameLoop();
             
             setTimeout(() => {
-                startMessage.style.opacity = '1';
-            }, 10);
-            
-            setTimeout(() => {
-                startMessage.style.opacity = '0';
-                setTimeout(() => startMessage.remove(), 500);
-            }, 2000);
-        }, 500);
+                if (gameRunning && !gameStarted) {
+                    tapHint.style.animation = 'none';
+                    setTimeout(() => {
+                        tapHint.style.display = 'none';
+                    }, 1000);
+                }
+            }, 5000);
+        }
+
+        // Запуск
+        init();
+    </script>
+
+    <!-- Service Worker регистрация -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker зарегистрирован');
+                    })
+                    .catch(error => {
+                        console.log('Ошибка регистрации Service Worker:', error);
+                    });
+            });
+        }
     </script>
 </body>
-
 </html>
