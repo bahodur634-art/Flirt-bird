@@ -1,0 +1,11 @@
+{
+  "name": "Flirt Bird",
+  "short_name": "FlirtBird",
+  "description": "Simple Flappy Bird style game made with JavaScript",
+  "start_url": "/Flirt-bird/index.html",
+  "scope": "/Flirt-bird/",
+  "display": "fullscreen",
+  "background_color": "#70c5ce",
+  "theme_color": "#70c5ce",
+  "orientation": "portrait"
+}
