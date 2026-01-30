@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flirt-bird-v3';
+const CACHE_NAME = 'flirt-bird-v4'; // Увеличиваем версию с v3 на v4
 const urlsToCache = [
   './',
   './index.html',
@@ -87,3 +87,4 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
+
