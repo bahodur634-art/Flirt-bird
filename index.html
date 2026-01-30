@@ -88,7 +88,7 @@
 
         .game-title {
             position: absolute;
-            top: 70px;
+            top: 100px; /* ИЗМЕНЕНО: было 70px */
             left: 0;
             right: 0;
             text-align: center;
@@ -173,7 +173,7 @@
 
         .hearts-display {
             position: absolute;
-            top: 130px;
+            top: 150px; /* ИЗМЕНЕНО: было 130px */
             left: 0;
             right: 0;
             text-align: center;
@@ -185,10 +185,10 @@
 
         @media (max-width: 768px) {
             .score-value { font-size: 22px; }
-            .game-title { font-size: 28px; top: 60px; }
+            .game-title { font-size: 28px; top: 90px; }
             .game-over h2 { font-size: 26px; }
             .restart-btn { padding: 16px 25px; font-size: 20px; }
-            .hearts-display { font-size: 32px; top: 110px; }
+            .hearts-display { font-size: 32px; top: 130px; }
         }
 
         @media (max-width: 480px) {
@@ -198,18 +198,18 @@
             }
             .score-value { font-size: 20px; }
             .score-label { font-size: 10px; }
-            .game-title { font-size: 24px; top: 50px; }
+            .game-title { font-size: 24px; top: 80px; }
             .game-over { padding: 20px; }
             .game-over h2 { font-size: 22px; }
             .restart-btn { padding: 14px 20px; font-size: 18px; }
             .tap-hint { font-size: 16px; bottom: 30px; }
-            .hearts-display { font-size: 28px; top: 100px; }
+            .hearts-display { font-size: 28px; top: 120px; }
         }
 
         @media (max-height: 600px) {
             .score-display { top: 10px; }
-            .game-title { top: 40px; font-size: 22px; }
-            .hearts-display { top: 80px; font-size: 26px; }
+            .game-title { top: 60px; font-size: 22px; }
+            .hearts-display { top: 110px; font-size: 26px; }
             .tap-hint { bottom: 20px; font-size: 14px; }
         }
 
@@ -350,6 +350,12 @@
         const heartsUI = document.getElementById('heartsUI');
         const tapHint = document.querySelector('.tap-hint');
 
+        // Константы для регулировки скорости
+        const PIPE_SPEED = 2.5;      // Скорость движения труб (было 4)
+        const PIPE_INTERVAL = 110;   // Частота появления труб (было 80)
+        const PIPE_GAP = 180;        // Разрыв между трубами (было 150)
+        const TAP_DELAY = 300;       // Задержка между тапами
+
         // Настройка canvas
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -359,7 +365,7 @@
             bird.height = Math.max(25, canvas.width * 0.05);
             bird.x = canvas.width * 0.15;
             
-            pipeGap = Math.max(120, canvas.height * 0.25);
+            pipeGap = Math.max(PIPE_GAP, canvas.height * 0.28);
             pipeWidth = Math.max(60, canvas.width * 0.08);
             
             if (gameRunning && !gameStarted) {
@@ -367,15 +373,15 @@
             }
         }
 
-        // Игровые переменные
+        // Игровые переменные (обновленные значения)
         let bird = {
             x: 100,
             y: 300,
             width: 40,
             height: 30,
             velocity: 0,
-            gravity: 0.5,
-            jump: -12
+            gravity: 0.3,   // ИЗМЕНЕНО: было 0.5
+            jump: -8        // ИЗМЕНЕНО: было -12
         };
 
         let pipes = [];
@@ -385,12 +391,11 @@
         let heartsCount = 0;
         let gameRunning = true;
         let gameStarted = false;
-        let pipeInterval = 80;
+        let pipeInterval = PIPE_INTERVAL;
         let frameCount = 0;
         let pipeWidth = 70;
-        let pipeGap = 150;
+        let pipeGap = PIPE_GAP;
         let lastTapTime = 0;
-        const tapDelay = 300;
 
         highScoreElement.textContent = highScore;
 
@@ -421,7 +426,7 @@
 
         // Создание сердечек
         function createHeart() {
-            if (Math.random() > 0.6 && pipes.length > 0) {
+            if (Math.random() > 0.7 && pipes.length > 0) {
                 const lastPipe = pipes[pipes.length - 2];
                 hearts.push({
                     x: lastPipe.x + lastPipe.width / 2,
@@ -433,10 +438,10 @@
             }
         }
 
-        // Прыжок
+        // Прыжок (обновленная сила)
         function jump(e) {
             const currentTime = Date.now();
-            if (currentTime - lastTapTime < tapDelay) return;
+            if (currentTime - lastTapTime < TAP_DELAY) return;
             lastTapTime = currentTime;
 
             if (!gameRunning) return;
@@ -494,6 +499,7 @@
         function update() {
             if (!gameRunning) return;
 
+            // Обновление птички
             bird.velocity += bird.gravity;
             bird.y += bird.velocity;
 
@@ -513,9 +519,9 @@
                 createHeart();
             }
 
-            // Обновление препятствий
+            // Обновление препятствий (с новой скоростью)
             for (let i = pipes.length - 1; i >= 0; i--) {
-                pipes[i].x -= 4;
+                pipes[i].x -= PIPE_SPEED; // ИЗМЕНЕНО: было 4
 
                 if (
                     bird.x < pipes[i].x + pipes[i].width &&
@@ -542,7 +548,7 @@
 
             // Обновление сердечек
             for (let i = hearts.length - 1; i >= 0; i--) {
-                hearts[i].x -= 4;
+                hearts[i].x -= PIPE_SPEED; // ИЗМЕНЕНО: было 4
 
                 const dx = bird.x + bird.width/2 - hearts[i].x;
                 const dy = bird.y + bird.height/2 - hearts[i].y;
@@ -566,8 +572,9 @@
                 }
             }
 
-            if (score > 100 && pipeInterval > 50) pipeInterval = 50;
-            else if (score > 50 && pipeInterval > 60) pipeInterval = 60;
+            // Медленнее увеличиваем сложность
+            if (score > 100 && pipeInterval > 70) pipeInterval = 70;
+            else if (score > 50 && pipeInterval > 85) pipeInterval = 85;
         }
 
         // Отрисовка
@@ -652,7 +659,7 @@
             drawClouds();
         }
 
-        // Облака
+        // Облака (медленнее)
         function drawClouds() {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             
@@ -666,7 +673,7 @@
                 if (cloud.x < -cloud.size * 3) {
                     cloud.x = canvas.width + cloud.size;
                 }
-                cloud.x -= 0.5;
+                cloud.x -= 0.3; // ИЗМЕНЕНО: было 0.5
                 
                 ctx.beginPath();
                 ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
@@ -705,7 +712,7 @@
             heartsCount = 0;
             gameRunning = true;
             gameStarted = false;
-            pipeInterval = 80;
+            pipeInterval = PIPE_INTERVAL;
             frameCount = 0;
             
             scoreElement.textContent = score;
