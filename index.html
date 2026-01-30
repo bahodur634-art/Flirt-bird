@@ -598,32 +598,45 @@
                 }
             }
             
-            // Воспроизведение звука набора очков
-            playScore() {
-                if (!this.soundEnabled || !this.initialized) return;
-                
-                try {
-                    const oscillator = this.audioContext.createOscillator();
-                    const gainNode = this.audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioContext.destination);
-                    
-                    oscillator.type = 'triangle';
-                    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.3);
-                    
-                    gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-                    
-                    oscillator.start();
-                    oscillator.stop(this.audioContext.currentTime + 0.3);
-                } catch (e) {
-                    console.log("Ошибка воспроизведения звука очков");
-                }
-            }
-            
-            setupSoundToggle() {
+           // Воспроизведение звука набора очков - НОВЫЙ ЗВУК
+playScore() {
+    if (!this.soundEnabled || !this.initialized) return;
+    
+    try {
+        const time = this.audioContext.currentTime;
+        const duration = 0.25;
+        
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Первый осциллятор - основной тон
+        oscillator1.type = 'sine';
+        oscillator1.frequency.setValueAtTime(1046.50, time); // C6
+        oscillator1.frequency.exponentialRampToValueAtTime(1318.51, time + duration); // E6
+        
+        // Второй осциллятор - гармоника
+        oscillator2.type = 'triangle';
+        oscillator2.frequency.setValueAtTime(1567.98, time); // G6
+        oscillator2.frequency.exponentialRampToValueAtTime(2093.00, time + duration); // C7
+        
+        gainNode.gain.setValueAtTime(0, time);
+        gainNode.gain.linearRampToValueAtTime(0.1, time + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        
+        oscillator1.start(time);
+        oscillator2.start(time);
+        oscillator1.stop(time + duration);
+        oscillator2.stop(time + duration);
+    } catch (e) {
+        console.log("Ошибка воспроизведения звука очков");
+    }
+}
+                setupSoundToggle() {
                 const soundToggle = document.getElementById('soundToggle');
                 const soundIcon = document.getElementById('soundIcon');
                 
@@ -1163,3 +1176,4 @@
     </script>
 </body>
 </html>
+
