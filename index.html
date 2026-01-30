@@ -11,6 +11,18 @@
     <meta name="apple-mobile-web-app-title" content="Flirt Bird">
     <meta name="msapplication-TileColor" content="#ff4081">
     <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+    <!-- PWA мета-теги -->
+    <meta name="application-name" content="Flirt Bird">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FlirtBird">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ff4081">
+
+    <!-- Иконки -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
     
     <title>Flirt Bird</title>
     <link rel="manifest" href="manifest.json">
@@ -1200,7 +1212,25 @@ playScore() {
             });
         }
     </script>
+    <script>
+// Простая регистрация Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('Service Worker зарегистрирован'))
+    .catch(err => console.log('Ошибка:', err));
+}
+// Скрытие адресной строки на мобильных устройствах
+function hideAddressBar() {
+  if (window.innerHeight < window.outerHeight) {
+    setTimeout(() => window.scrollTo(0, 1), 100);
+  }
+}
+// Применяем при загрузке
+window.addEventListener('load', hideAddressBar);
+window.addEventListener('orientationchange', hideAddressBar);
+</script>
 </body>
 </html>
+
 
 
