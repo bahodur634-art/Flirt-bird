@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#ff4081">
@@ -324,464 +327,466 @@
             <button class="restart-btn" id="restartButton">ИГРАТЬ СНОВА</button>
         </div>
     </div>
-
-    <script>
-        // Скрываем экран загрузки когда все готово
-        window.addEventListener('load', function() {
+ <script>
+    // Скрываем экран загрузки когда все готово
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            document.getElementById('loadingScreen').style.opacity = '0';
             setTimeout(() => {
-                document.getElementById('loadingScreen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                }, 300);
-            }, 500);
-        });
+                document.getElementById('loadingScreen').style.display = 'none';
+            }, 300);
+        }, 500);
+    });
 
-        // Получаем элементы
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const highScoreElement = document.getElementById('highScore');
-        const heartsCountElement = document.getElementById('heartsCount');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        const finalScoreElement = document.getElementById('finalScore');
-        const finalHighScoreElement = document.getElementById('finalHighScore');
-        const finalHeartsElement = document.getElementById('finalHearts');
-        const restartButton = document.getElementById('restartButton');
-        const heartsUI = document.getElementById('heartsUI');
-        const tapHint = document.querySelector('.tap-hint');
+    // Получаем элементы
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const highScoreElement = document.getElementById('highScore');
+    const heartsCountElement = document.getElementById('heartsCount');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreElement = document.getElementById('finalScore');
+    const finalHighScoreElement = document.getElementById('finalHighScore');
+    const finalHeartsElement = document.getElementById('finalHearts');
+    const restartButton = document.getElementById('restartButton');
+    const heartsUI = document.getElementById('heartsUI');
+    const tapHint = document.querySelector('.tap-hint');
 
-        // Константы для регулировки скорости
-        const PIPE_SPEED = 2.5;      // Скорость движения труб (было 4)
-        const PIPE_INTERVAL = 110;   // Частота появления труб (было 80)
-        const PIPE_GAP = 180;        // Разрыв между трубами (было 150)
-        const TAP_DELAY = 300;       // Задержка между тапами
+    // ====== НОВЫЕ ПАРАМЕТРЫ ИГРЫ ======
+    console.log("🎮 FLIRT BIRD - ОБНОВЛЕННАЯ ВЕРСИЯ");
+    console.log("✅ Заголовок опущен на 30px ниже");
+    console.log("🐦 Птичка: гравитация 0.3, прыжок -8");
+    console.log("🚀 Трубы: скорость 2.5, интервал 110, разрыв 180px");
+    
+    const PIPE_SPEED = 2.5;
+    const PIPE_INTERVAL = 110;
+    const PIPE_GAP = 180;
+    const TAP_DELAY = 300;
 
-        // Настройка canvas
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            bird.width = Math.max(30, canvas.width * 0.06);
-            bird.height = Math.max(25, canvas.width * 0.05);
-            bird.x = canvas.width * 0.15;
-            
-            pipeGap = Math.max(PIPE_GAP, canvas.height * 0.28);
-            pipeWidth = Math.max(60, canvas.width * 0.08);
-            
-            if (gameRunning && !gameStarted) {
-                tapHint.style.display = 'none';
-            }
-        }
-
-        // Игровые переменные (обновленные значения)
-        let bird = {
-            x: 100,
-            y: 300,
-            width: 40,
-            height: 30,
-            velocity: 0,
-            gravity: 0.3,   // ИЗМЕНЕНО: было 0.5
-            jump: -8        // ИЗМЕНЕНО: было -12
-        };
-
-        let pipes = [];
-        let hearts = [];
-        let score = 0;
-        let highScore = localStorage.getItem('flirtBirdHighScore') || 0;
-        let heartsCount = 0;
-        let gameRunning = true;
-        let gameStarted = false;
-        let pipeInterval = PIPE_INTERVAL;
-        let frameCount = 0;
-        let pipeWidth = 70;
-        let pipeGap = PIPE_GAP;
-        let lastTapTime = 0;
-
-        highScoreElement.textContent = highScore;
-
-        // Создание препятствий
-        function createPipe() {
-            const minHeight = canvas.height * 0.1;
-            const maxHeight = canvas.height - pipeGap - minHeight;
-            const topPipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
-            
-            pipes.push({
-                x: canvas.width,
-                y: 0,
-                width: pipeWidth,
-                height: topPipeHeight,
-                color: '#FF99CC',
-                passed: false
-            });
-            
-            pipes.push({
-                x: canvas.width,
-                y: topPipeHeight + pipeGap,
-                width: pipeWidth,
-                height: canvas.height - topPipeHeight - pipeGap,
-                color: '#FF99CC',
-                passed: false
-            });
-        }
-
-        // Создание сердечек
-        function createHeart() {
-            if (Math.random() > 0.7 && pipes.length > 0) {
-                const lastPipe = pipes[pipes.length - 2];
-                hearts.push({
-                    x: lastPipe.x + lastPipe.width / 2,
-                    y: lastPipe.height + pipeGap / 2,
-                    radius: Math.min(15, canvas.width * 0.03),
-                    color: '#FF4081',
-                    collected: false
-                });
-            }
-        }
-
-        // Прыжок (обновленная сила)
-        function jump(e) {
-            const currentTime = Date.now();
-            if (currentTime - lastTapTime < TAP_DELAY) return;
-            lastTapTime = currentTime;
-
-            if (!gameRunning) return;
-            
-            gameStarted = true;
+    // Настройка canvas
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        bird.width = Math.max(30, canvas.width * 0.06);
+        bird.height = Math.max(25, canvas.width * 0.05);
+        bird.x = canvas.width * 0.15;
+        
+        pipeGap = Math.max(PIPE_GAP, canvas.height * 0.28);
+        pipeWidth = Math.max(60, canvas.width * 0.08);
+        
+        if (gameRunning && !gameStarted) {
             tapHint.style.display = 'none';
-            
-            bird.velocity = bird.jump;
-            
-            // Эффект прыжка
-            if (e && e.type === 'touchstart') {
-                const touch = e.touches[0];
-                createJumpEffect(touch.clientX, touch.clientY);
-            } else if (e) {
-                createJumpEffect(e.clientX, e.clientY);
-            }
+        }
+    }
+
+    // Игровые переменные (ОБНОВЛЕННЫЕ)
+    let bird = {
+        x: 100,
+        y: 300,
+        width: 40,
+        height: 30,
+        velocity: 0,
+        gravity: 0.3,   // ИЗМЕНЕНО: было 0.5
+        jump: -8        // ИЗМЕНЕНО: было -12
+    };
+
+    let pipes = [];
+    let hearts = [];
+    let score = 0;
+    let highScore = localStorage.getItem('flirtBirdHighScore') || 0;
+    let heartsCount = 0;
+    let gameRunning = true;
+    let gameStarted = false;
+    let pipeInterval = PIPE_INTERVAL;
+    let frameCount = 0;
+    let pipeWidth = 70;
+    let pipeGap = PIPE_GAP;
+    let lastTapTime = 0;
+
+    highScoreElement.textContent = highScore;
+
+    // Создание препятствий
+    function createPipe() {
+        const minHeight = canvas.height * 0.1;
+        const maxHeight = canvas.height - pipeGap - minHeight;
+        const topPipeHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+        
+        pipes.push({
+            x: canvas.width,
+            y: 0,
+            width: pipeWidth,
+            height: topPipeHeight,
+            color: '#FF99CC',
+            passed: false
+        });
+        
+        pipes.push({
+            x: canvas.width,
+            y: topPipeHeight + pipeGap,
+            width: pipeWidth,
+            height: canvas.height - topPipeHeight - pipeGap,
+            color: '#FF99CC',
+            passed: false
+        });
+    }
+
+    // Создание сердечек
+    function createHeart() {
+        if (Math.random() > 0.7 && pipes.length > 0) {
+            const lastPipe = pipes[pipes.length - 2];
+            hearts.push({
+                x: lastPipe.x + lastPipe.width / 2,
+                y: lastPipe.height + pipeGap / 2,
+                radius: Math.min(15, canvas.width * 0.03),
+                color: '#FF4081',
+                collected: false
+            });
+        }
+    }
+
+    // Прыжок
+    function jump(e) {
+        const currentTime = Date.now();
+        if (currentTime - lastTapTime < TAP_DELAY) return;
+        lastTapTime = currentTime;
+
+        if (!gameRunning) return;
+        
+        gameStarted = true;
+        tapHint.style.display = 'none';
+        
+        bird.velocity = bird.jump;
+        
+        if (e && e.type === 'touchstart') {
+            const touch = e.touches[0];
+            createJumpEffect(touch.clientX, touch.clientY);
+        } else if (e) {
+            createJumpEffect(e.clientX, e.clientY);
+        }
+    }
+
+    // Эффект прыжка
+    function createJumpEffect(x, y) {
+        const effect = document.createElement('div');
+        effect.className = 'jump-effect';
+        effect.style.left = (x - 25) + 'px';
+        effect.style.top = (y - 25) + 'px';
+        document.body.appendChild(effect);
+        
+        setTimeout(() => effect.remove(), 300);
+    }
+
+    // Эффект сбора сердечка
+    function createHeartEffect(x, y) {
+        const effect = document.createElement('div');
+        effect.className = 'heart-collect';
+        effect.textContent = '❤️ +20';
+        effect.style.left = (x - 30) + 'px';
+        effect.style.top = (y - 30) + 'px';
+        document.body.appendChild(effect);
+        
+        updateHeartsUI();
+        
+        setTimeout(() => effect.remove(), 1000);
+    }
+
+    // Обновление UI сердечек
+    function updateHeartsUI() {
+        let heartsText = '';
+        const totalHearts = Math.min(10, heartsCount);
+        for (let i = 0; i < totalHearts; i++) {
+            heartsText += '❤️ ';
+        }
+        heartsUI.textContent = heartsText || '❤️';
+    }
+
+    // Обновление игры
+    function update() {
+        if (!gameRunning) return;
+
+        bird.velocity += bird.gravity;
+        bird.y += bird.velocity;
+
+        if (bird.y <= 0) {
+            bird.y = 0;
+            bird.velocity = 0;
+        }
+        
+        if (bird.y + bird.height >= canvas.height) {
+            gameOver();
+            return;
         }
 
-        // Эффект прыжка
-        function createJumpEffect(x, y) {
-            const effect = document.createElement('div');
-            effect.className = 'jump-effect';
-            effect.style.left = (x - 25) + 'px';
-            effect.style.top = (y - 25) + 'px';
-            document.body.appendChild(effect);
-            
-            setTimeout(() => effect.remove(), 300);
+        frameCount++;
+        if (frameCount % pipeInterval === 0) {
+            createPipe();
+            createHeart();
         }
 
-        // Эффект сбора сердечка
-        function createHeartEffect(x, y) {
-            const effect = document.createElement('div');
-            effect.className = 'heart-collect';
-            effect.textContent = '❤️ +20';
-            effect.style.left = (x - 30) + 'px';
-            effect.style.top = (y - 30) + 'px';
-            document.body.appendChild(effect);
-            
-            updateHeartsUI();
-            
-            setTimeout(() => effect.remove(), 1000);
-        }
+        // Обновление препятствий
+        for (let i = pipes.length - 1; i >= 0; i--) {
+            pipes[i].x -= PIPE_SPEED;  // ИСПОЛЬЗУЕМ НОВУЮ СКОРОСТЬ
 
-        // Обновление UI сердечек
-        function updateHeartsUI() {
-            let heartsText = '';
-            const totalHearts = Math.min(10, heartsCount);
-            for (let i = 0; i < totalHearts; i++) {
-                heartsText += '❤️ ';
-            }
-            heartsUI.textContent = heartsText || '❤️';
-        }
-
-        // Обновление игры
-        function update() {
-            if (!gameRunning) return;
-
-            // Обновление птички
-            bird.velocity += bird.gravity;
-            bird.y += bird.velocity;
-
-            if (bird.y <= 0) {
-                bird.y = 0;
-                bird.velocity = 0;
-            }
-            
-            if (bird.y + bird.height >= canvas.height) {
+            if (
+                bird.x < pipes[i].x + pipes[i].width &&
+                bird.x + bird.width > pipes[i].x &&
+                bird.y < pipes[i].y + pipes[i].height &&
+                bird.y + bird.height > pipes[i].y
+            ) {
                 gameOver();
                 return;
             }
 
-            frameCount++;
-            if (frameCount % pipeInterval === 0) {
-                createPipe();
-                createHeart();
+            if (pipes[i].x + pipes[i].width < 0) {
+                pipes.splice(i, 1);
             }
 
-            // Обновление препятствий (с новой скоростью)
-            for (let i = pipes.length - 1; i >= 0; i--) {
-                pipes[i].x -= PIPE_SPEED; // ИЗМЕНЕНО: было 4
-
-                if (
-                    bird.x < pipes[i].x + pipes[i].width &&
-                    bird.x + bird.width > pipes[i].x &&
-                    bird.y < pipes[i].y + pipes[i].height &&
-                    bird.y + bird.height > pipes[i].y
-                ) {
-                    gameOver();
-                    return;
-                }
-
-                if (pipes[i].x + pipes[i].width < 0) {
-                    pipes.splice(i, 1);
-                }
-
-                if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
-                    pipes[i].passed = true;
-                    if (i % 2 === 0) {
-                        score += 5;
-                        scoreElement.textContent = score;
-                    }
-                }
-            }
-
-            // Обновление сердечек
-            for (let i = hearts.length - 1; i >= 0; i--) {
-                hearts[i].x -= PIPE_SPEED; // ИЗМЕНЕНО: было 4
-
-                const dx = bird.x + bird.width/2 - hearts[i].x;
-                const dy = bird.y + bird.height/2 - hearts[i].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (!hearts[i].collected && distance < bird.width/2 + hearts[i].radius) {
-                    hearts[i].collected = true;
-                    heartsCount++;
-                    heartsCountElement.textContent = heartsCount;
-                    score += 20;
+            if (!pipes[i].passed && pipes[i].x + pipes[i].width < bird.x) {
+                pipes[i].passed = true;
+                if (i % 2 === 0) {
+                    score += 5;
                     scoreElement.textContent = score;
-                    
-                    createHeartEffect(hearts[i].x, hearts[i].y);
-                    
-                    hearts.splice(i, 1);
-                    continue;
-                }
-
-                if (hearts[i].x + hearts[i].radius < 0) {
-                    hearts.splice(i, 1);
                 }
             }
-
-            // Медленнее увеличиваем сложность
-            if (score > 100 && pipeInterval > 70) pipeInterval = 70;
-            else if (score > 50 && pipeInterval > 85) pipeInterval = 85;
         }
 
-        // Отрисовка
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Обновление сердечек
+        for (let i = hearts.length - 1; i >= 0; i--) {
+            hearts[i].x -= PIPE_SPEED;  // ИСПОЛЬЗУЕМ НОВУЮ СКОРОСТЬ
 
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
-            ctx.fillStyle = '#98FB98';
-            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+            const dx = bird.x + bird.width/2 - hearts[i].x;
+            const dy = bird.y + bird.height/2 - hearts[i].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (!hearts[i].collected && distance < bird.width/2 + hearts[i].radius) {
+                hearts[i].collected = true;
+                heartsCount++;
+                heartsCountElement.textContent = heartsCount;
+                score += 20;
+                scoreElement.textContent = score;
+                
+                createHeartEffect(hearts[i].x, hearts[i].y);
+                
+                hearts.splice(i, 1);
+                continue;
+            }
 
-            // Птичка
+            if (hearts[i].x + hearts[i].radius < 0) {
+                hearts.splice(i, 1);
+            }
+        }
+
+        // Увеличение сложности
+        if (score > 100 && pipeInterval > 70) pipeInterval = 70;
+        else if (score > 50 && pipeInterval > 85) pipeInterval = 85;
+    }
+
+    // Отрисовка
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+        ctx.fillStyle = '#98FB98';
+        ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+        // Птичка
+        ctx.fillStyle = '#FF4081';
+        ctx.beginPath();
+        ctx.ellipse(
+            bird.x + bird.width/2,
+            bird.y + bird.height/2,
+            bird.width/2,
+            bird.height/2,
+            0, 0, Math.PI * 2
+        );
+        ctx.fill();
+
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#FF9800';
+        ctx.beginPath();
+        ctx.moveTo(bird.x + bird.width, bird.y + bird.height/2);
+        ctx.lineTo(bird.x + bird.width + bird.width * 0.4, bird.y + bird.height/2);
+        ctx.lineTo(bird.x + bird.width, bird.y + bird.height/2 + bird.height * 0.3);
+        ctx.fill();
+
+        // Препятствия
+        pipes.forEach(pipe => {
+            ctx.fillStyle = pipe.color;
+            ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+            
             ctx.fillStyle = '#FF4081';
+            ctx.fillRect(pipe.x - 5, pipe.y, 10, pipe.height);
+            ctx.fillRect(pipe.x + pipe.width - 5, pipe.y, 10, pipe.height);
+        });
+
+        // Сердечки
+        hearts.forEach(heart => {
+            ctx.fillStyle = heart.color;
             ctx.beginPath();
-            ctx.ellipse(
-                bird.x + bird.width/2,
-                bird.y + bird.height/2,
-                bird.width/2,
-                bird.height/2,
-                0, 0, Math.PI * 2
+            
+            const topCurve = heart.radius * 0.8;
+            ctx.moveTo(heart.x, heart.y + topCurve);
+            
+            ctx.bezierCurveTo(
+                heart.x, heart.y,
+                heart.x - heart.radius, heart.y,
+                heart.x - heart.radius, heart.y + topCurve
             );
-            ctx.fill();
-
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.07, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#FF9800';
-            ctx.beginPath();
-            ctx.moveTo(bird.x + bird.width, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width + bird.width * 0.4, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width, bird.y + bird.height/2 + bird.height * 0.3);
-            ctx.fill();
-
-            // Препятствия
-            pipes.forEach(pipe => {
-                ctx.fillStyle = pipe.color;
-                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
-                
-                ctx.fillStyle = '#FF4081';
-                ctx.fillRect(pipe.x - 5, pipe.y, 10, pipe.height);
-                ctx.fillRect(pipe.x + pipe.width - 5, pipe.y, 10, pipe.height);
-            });
-
-            // Сердечки
-            hearts.forEach(heart => {
-                ctx.fillStyle = heart.color;
-                ctx.beginPath();
-                
-                const topCurve = heart.radius * 0.8;
-                ctx.moveTo(heart.x, heart.y + topCurve);
-                
-                ctx.bezierCurveTo(
-                    heart.x, heart.y,
-                    heart.x - heart.radius, heart.y,
-                    heart.x - heart.radius, heart.y + topCurve
-                );
-                ctx.bezierCurveTo(
-                    heart.x - heart.radius, heart.y + heart.radius * 1.5,
-                    heart.x, heart.y + heart.radius * 1.8,
-                    heart.x, heart.y + heart.radius * 2.5
-                );
-                ctx.bezierCurveTo(
-                    heart.x, heart.y + heart.radius * 1.8,
-                    heart.x + heart.radius, heart.y + heart.radius * 1.5,
-                    heart.x + heart.radius, heart.y + topCurve
-                );
-                ctx.bezierCurveTo(
-                    heart.x + heart.radius, heart.y,
-                    heart.x, heart.y,
-                    heart.x, heart.y + topCurve
-                );
-                
-                ctx.fill();
-            });
-
-            drawClouds();
-        }
-
-        // Облака (медленнее)
-        function drawClouds() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.bezierCurveTo(
+                heart.x - heart.radius, heart.y + heart.radius * 1.5,
+                heart.x, heart.y + heart.radius * 1.8,
+                heart.x, heart.y + heart.radius * 2.5
+            );
+            ctx.bezierCurveTo(
+                heart.x, heart.y + heart.radius * 1.8,
+                heart.x + heart.radius, heart.y + heart.radius * 1.5,
+                heart.x + heart.radius, heart.y + topCurve
+            );
+            ctx.bezierCurveTo(
+                heart.x + heart.radius, heart.y,
+                heart.x, heart.y,
+                heart.x, heart.y + topCurve
+            );
             
-            const clouds = [
-                {x: canvas.width * 0.2, y: canvas.height * 0.1, size: canvas.width * 0.05},
-                {x: canvas.width * 0.6, y: canvas.height * 0.15, size: canvas.width * 0.06},
-                {x: canvas.width * 0.8, y: canvas.height * 0.05, size: canvas.width * 0.04}
-            ];
-            
-            clouds.forEach(cloud => {
-                if (cloud.x < -cloud.size * 3) {
-                    cloud.x = canvas.width + cloud.size;
-                }
-                cloud.x -= 0.3; // ИЗМЕНЕНО: было 0.5
-                
-                ctx.beginPath();
-                ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
-                ctx.arc(cloud.x + cloud.size * 0.8, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
-                ctx.arc(cloud.x + cloud.size * 1.5, cloud.y, cloud.size * 0.9, 0, Math.PI * 2);
-                ctx.arc(cloud.x + cloud.size * 0.8, cloud.y + cloud.size * 0.3, cloud.size * 0.7, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
+            ctx.fill();
+        });
 
-        // Конец игры
-        function gameOver() {
-            if (!gameRunning) return;
-            
-            gameRunning = false;
-            
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('flirtBirdHighScore', highScore);
-                highScoreElement.textContent = highScore;
+        drawClouds();
+    }
+
+    // Облака
+    function drawClouds() {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        
+        const clouds = [
+            {x: canvas.width * 0.2, y: canvas.height * 0.1, size: canvas.width * 0.05},
+            {x: canvas.width * 0.6, y: canvas.height * 0.15, size: canvas.width * 0.06},
+            {x: canvas.width * 0.8, y: canvas.height * 0.05, size: canvas.width * 0.04}
+        ];
+        
+        clouds.forEach(cloud => {
+            if (cloud.x < -cloud.size * 3) {
+                cloud.x = canvas.width + cloud.size;
             }
+            cloud.x -= 0.3;  // ИЗМЕНЕНО: было 0.5
             
-            finalScoreElement.textContent = score;
-            finalHighScoreElement.textContent = highScore;
-            finalHeartsElement.textContent = heartsCount;
-            gameOverScreen.style.display = 'block';
-        }
+            ctx.beginPath();
+            ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+            ctx.arc(cloud.x + cloud.size * 0.8, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
+            ctx.arc(cloud.x + cloud.size * 1.5, cloud.y, cloud.size * 0.9, 0, Math.PI * 2);
+            ctx.arc(cloud.x + cloud.size * 0.8, cloud.y + cloud.size * 0.3, cloud.size * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
 
-        // Перезапуск
-        function restartGame() {
-            bird.y = canvas.height / 2;
-            bird.velocity = 0;
-            pipes = [];
-            hearts = [];
-            score = 0;
-            heartsCount = 0;
-            gameRunning = true;
-            gameStarted = false;
-            pipeInterval = PIPE_INTERVAL;
-            frameCount = 0;
-            
-            scoreElement.textContent = score;
-            heartsCountElement.textContent = heartsCount;
-            gameOverScreen.style.display = 'none';
-            
-            tapHint.style.display = 'block';
-            tapHint.style.animation = 'pulse 2s infinite';
-            
-            updateHeartsUI();
+    // Конец игры
+    function gameOver() {
+        if (!gameRunning) return;
+        
+        gameRunning = false;
+        
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('flirtBirdHighScore', highScore);
+            highScoreElement.textContent = highScore;
         }
+        
+        finalScoreElement.textContent = score;
+        finalHighScoreElement.textContent = highScore;
+        finalHeartsElement.textContent = heartsCount;
+        gameOverScreen.style.display = 'block';
+    }
 
-        // Игровой цикл
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+    // Перезапуск
+    function restartGame() {
+        bird.y = canvas.height / 2;
+        bird.velocity = 0;
+        pipes = [];
+        hearts = [];
+        score = 0;
+        heartsCount = 0;
+        gameRunning = true;
+        gameStarted = false;
+        pipeInterval = PIPE_INTERVAL;
+        frameCount = 0;
+        
+        scoreElement.textContent = score;
+        heartsCountElement.textContent = heartsCount;
+        gameOverScreen.style.display = 'none';
+        
+        tapHint.style.display = 'block';
+        tapHint.style.animation = 'pulse 2s infinite';
+        
+        updateHeartsUI();
+    }
 
-        // Обработчики событий
-        function setupEventListeners() {
-            canvas.addEventListener('touchstart', function(e) {
+    // Игровой цикл
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Обработчики событий
+    function setupEventListeners() {
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            jump(e);
+        });
+        
+        canvas.addEventListener('click', jump);
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
-                jump(e);
-            });
-            
-            canvas.addEventListener('click', jump);
-            
-            document.addEventListener('keydown', function(e) {
-                if (e.code === 'Space' || e.key === ' ') {
-                    e.preventDefault();
-                    jump();
-                }
-            });
-            
-            restartButton.addEventListener('click', restartGame);
-            
-            window.addEventListener('resize', function() {
-                resizeCanvas();
-                if (gameRunning) {
-                    bird.y = Math.min(bird.y, canvas.height - bird.height);
-                }
-            });
-            
-            canvas.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            });
-        }
-
-        // Инициализация
-        function init() {
+                jump();
+            }
+        });
+        
+        restartButton.addEventListener('click', restartGame);
+        
+        window.addEventListener('resize', function() {
             resizeCanvas();
-            setupEventListeners();
-            gameLoop();
-            
-            setTimeout(() => {
-                if (gameRunning && !gameStarted) {
-                    tapHint.style.animation = 'none';
-                    setTimeout(() => {
-                        tapHint.style.display = 'none';
-                    }, 1000);
-                }
-            }, 5000);
-        }
+            if (gameRunning) {
+                bird.y = Math.min(bird.y, canvas.height - bird.height);
+            }
+        });
+        
+        canvas.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    }
 
-        // Запуск
-        init();
-    </script>
+    // Инициализация
+    function init() {
+        resizeCanvas();
+        setupEventListeners();
+        gameLoop();
+        
+        setTimeout(() => {
+            if (gameRunning && !gameStarted) {
+                tapHint.style.animation = 'none';
+                setTimeout(() => {
+                    tapHint.style.display = 'none';
+                }, 1000);
+            }
+        }, 5000);
+    }
+
+    // Запуск
+    init();
+</script>
 
     <!-- Service Worker регистрация -->
     <script>
@@ -797,5 +802,23 @@
             });
         }
     </script>
+    <script>
+  // Принудительное обновление при загрузке
+  window.addEventListener('load', function() {
+    // Проверяем Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.update();
+        }
+      });
+    }
+    
+    // Показываем версию в консоли
+    console.log('Flirt Bird - обновленная медленная версия загружена');
+    console.log('Параметры: гравитация=0.3, прыжок=-8, скорость труб=2.5');
+  });
+</script>
 </body>
 </html>
+
