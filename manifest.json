@@ -1,28 +1,30 @@
 {
   "name": "Flirt Bird",
-  "short_name": "Flirt Bird",
-  "description": "Увлекательная игра про птичку, которая летает и собирает сердечки",
-  "start_url": ".",
-  "id": "flirt-bird-game",
+  "short_name": "FlirtBird",
+  "description": "Захватывающая игра Flirt Bird - летите, собирайте сердечки и ставьте рекорды!",
+  "start_url": "/",
   "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffc3a0",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
   "theme_color": "#ff4081",
-  "categories": ["game", "entertainment"],
-  "screenshots": [],
+  "lang": "ru",
+  
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  
+  "prefer_related_applications": false,
+  "related_applications": []
 }
