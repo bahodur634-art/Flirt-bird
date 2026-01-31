@@ -1305,7 +1305,7 @@ playScore() {
     <script>
 // Простая регистрация Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register('./sw.js')
     .then(() => console.log('Service Worker зарегистрирован'))
     .catch(err => console.log('Ошибка:', err));
 }
