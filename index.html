@@ -738,6 +738,16 @@ playScore() {
         const PIPE_GAP = 180;
         const TAP_DELAY = 300;
 
+        // Day/Night cycle settings
+        const DAY_NIGHT_DURATION = 60 * 1000; // 1 minute per phase
+        const TRANSITION_DURATION = 2000; // smooth transition in ms
+        let phaseStartTime = Date.now();
+        let isDay = true;
+        // Blend value between 0..1 where 1 = full day, 0 = full night. Updated in updateDayNight()
+        let dayBlend = 1;
+        let stars = [];
+        let numStars = 120;
+
         // Инициализация звуковой системы
         let soundSystem;
         
@@ -756,6 +766,9 @@ playScore() {
             if (gameRunning && !gameStarted) {
                 tapHint.style.display = 'none';
             }
+
+            // regenerate stars to fit new canvas size
+            generateStars();
         }
 
         // Игровые переменные
@@ -889,6 +902,9 @@ playScore() {
         function update() {
             if (!gameRunning) return;
 
+            // Update day/night (handles phase switching and star twinkle)
+            updateDayNight();
+
             bird.velocity += bird.gravity;
             bird.y += bird.velocity;
 
@@ -979,10 +995,8 @@ playScore() {
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
-            ctx.fillStyle = '#98FB98';
-            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+            // Draw day/night background (handles transitions, stars, moon, and grass)
+            drawBackground();
 
             // Птичка
             ctx.fillStyle = '#FF4081';
@@ -1059,7 +1073,11 @@ playScore() {
 
         // Облака
         function drawClouds() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            // Clouds are visible mainly during day. Fade with dayBlend.
+            const cloudAlpha = 0.8 * dayBlend;
+            if (cloudAlpha < 0.02) return;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${cloudAlpha})`;
             
             const clouds = [
                 {x: canvas.width * 0.2, y: canvas.height * 0.1, size: canvas.width * 0.05},
@@ -1080,6 +1098,96 @@ playScore() {
                 ctx.arc(cloud.x + cloud.size * 0.8, cloud.y + cloud.size * 0.3, cloud.size * 0.7, 0, Math.PI * 2);
                 ctx.fill();
             });
+        }
+
+        // Generate stars for night background
+        function generateStars() {
+            stars = [];
+            const areaHeight = Math.max(100, canvas.height * 0.8);
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * areaHeight,
+                    r: Math.random() * 1.5 + 0.3,
+                    twinkleSpeed: 0.02 + Math.random() * 0.03,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        // Update day/night state and twinkle stars
+        function updateDayNight() {
+            const now = Date.now();
+            const elapsed = now - phaseStartTime;
+            // Switch phase if elapsed past duration
+            if (elapsed >= DAY_NIGHT_DURATION) {
+                isDay = !isDay;
+                phaseStartTime = now;
+            }
+            const phaseElapsed = now - phaseStartTime;
+            if (phaseElapsed < TRANSITION_DURATION) {
+                const t = phaseElapsed / TRANSITION_DURATION;
+                // If it's day phase, we fade from night to day (dayBlend goes 0->1)
+                dayBlend = isDay ? t : 1 - t;
+            } else {
+                dayBlend = isDay ? 1 : 0;
+            }
+            // Update stars twinkle
+            stars.forEach(s => {
+                s.phase += s.twinkleSpeed;
+                s.brightness = 0.5 + 0.5 * Math.sin(s.phase);
+            });
+        }
+
+        // Draw blended background for day / night
+        function drawBackground() {
+            // Night gradient
+            const nightGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            nightGradient.addColorStop(0, '#071029');
+            nightGradient.addColorStop(1, '#02020a');
+
+            // Day sky (keeps original look)
+            const daySkyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
+            daySkyGradient.addColorStop(0, '#87CEEB');
+            daySkyGradient.addColorStop(1, '#87CEEB');
+
+            // Grass color
+            const dayGrass = '#98FB98';
+
+            // First draw night layer with alpha (1 - dayBlend)
+            if (1 - dayBlend > 0.005) {
+                ctx.save();
+                ctx.globalAlpha = 1 - dayBlend;
+                ctx.fillStyle = nightGradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Draw stars
+                stars.forEach(s => {
+                    const alpha = (s.brightness * 0.9);
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                // Moon
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(240, 240, 220, ${0.9})`;
+                const mx = canvas.width * 0.8;
+                const my = Math.max(40, canvas.height * 0.12);
+                ctx.arc(mx, my, Math.max(28, canvas.width * 0.04), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw day layer with alpha dayBlend
+            if (dayBlend > 0.005) {
+                ctx.save();
+                ctx.globalAlpha = dayBlend;
+                ctx.fillStyle = daySkyGradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+                ctx.fillStyle = dayGrass;
+                ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+                ctx.restore();
+            }
         }
 
         // Конец игры со звуком
@@ -1230,7 +1338,3 @@ window.addEventListener('orientationchange', hideAddressBar);
 </script>
 </body>
 </html>
-
-
-
-
