@@ -1,6 +1,7 @@
 {
   "name": "Flirt Bird",
   "short_name": "FlirtBird",
+  "id": "/Flirt-bird/"
   "version": "1.1.0",
   "description": "Захватывающая игра Flirt Bird - летите, собирайте сердечки и ставьте рекорды!",
   "start_url": "./index.html",
