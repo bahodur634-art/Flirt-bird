@@ -1,90 +1,76 @@
-const CACHE_NAME = 'flirt-bird-v4'; // Увеличиваем версию с v3 на v4
-const urlsToCache = [
+const CACHE_VERSION = 'v1';
+const STATIC_CACHE = `flirt-bird-static-${CACHE_VERSION}`;
+const ASSETS_CACHE = `flirt-bird-assets-${CACHE_VERSION}`;
+
+// Что кэшируем ПРИ УСТАНОВКЕ (минимум!)
+const STATIC_FILES = [
   './',
   './index.html',
-  './manifest.json',
-  './icons/icon-192x192.png',
-  './icons/icon-512x512.png'
+  './manifest.json'
 ];
 
-// Установка Service Worker
+// Установка
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Кэшируем файлы для офлайн-работы');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE).then(cache => cache.addAll(STATIC_FILES))
   );
+  self.skipWaiting();
 });
 
-// Активация
+// Активация — чистим старые кэши
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Удаляем старый кэш:', cacheName);
-            return caches.delete(cacheName);
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (![STATIC_CACHE, ASSETS_CACHE].includes(key)) {
+            return caches.delete(key);
           }
         })
-      );
-    }).then(() => self.clients.claim())
+      )
+    )
   );
+  self.clients.claim();
 });
 
-// Обработка запросов
+// FETCH — умная логика
 self.addEventListener('fetch', event => {
-  // Пропускаем не-GET запросы и Chrome расширения
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // 🖼 Картинки, ассеты — Cache First
   if (
-    event.request.method !== 'GET' ||
-    event.request.url.startsWith('chrome-extension')
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.startsWith('/icons/')
   ) {
+    event.respondWith(cacheFirst(event.request));
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Возвращаем из кэша если есть
-        if (response) {
-          return response;
-        }
-
-        // Загружаем из сети
-        return fetch(event.request)
-          .then(response => {
-            // Проверяем валидность ответа
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Клонируем и кэшируем
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // Для навигации возвращаем главную страницу
-            if (event.request.mode === 'navigate') {
-              return caches.match('./index.html');
-            }
-            return null;
-          });
-      })
-  );
+  // 📄 HTML и всё остальное — Network First
+  event.respondWith(networkFirst(event.request));
 });
 
-// Получение сообщений от клиента
-self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
+// ===== STRATEGIES =====
+
+async function cacheFirst(request) {
+  const cache = await caches.open(ASSETS_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  cache.put(request, response.clone());
+  return response;
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  try {
+    const response = await fetch(request);
+    cache.put(request, response.clone());
+    return response;
+  } catch (err) {
+    return cache.match(request);
   }
-});
-
+}
