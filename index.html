@@ -751,8 +751,8 @@ playScore() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            bird.width = Math.max(36, canvas.width * 0.072);
-            bird.height = Math.max(30, canvas.width * 0.06);
+            bird.width = Math.max(40, canvas.width * 0.08);
+            bird.height = Math.max(35, canvas.width * 0.07);
             bird.x = canvas.width * 0.15;
             
             pipeGap = Math.max(PIPE_GAP, canvas.height * 0.28);
@@ -774,7 +774,7 @@ playScore() {
             height: 30,
             velocity: 0,
             gravity: 0.3,
-            jump: -8.2
+            jump: -8.05
         };
 
         let pipes = [];
@@ -1314,6 +1314,7 @@ window.addEventListener('orientationchange', hideAddressBar);
 </script>
 </body>
 </html>
+
 
 
 
