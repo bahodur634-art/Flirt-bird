@@ -721,6 +721,8 @@ playScore() {
         // Получаем элементы
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const birdImage = new Image();
+        birdImage.src = "assets/bird.png";
         const scoreElement = document.getElementById('score');
         const highScoreElement = document.getElementById('highScore');
         const heartsCountElement = document.getElementById('heartsCount');
@@ -756,8 +758,8 @@ playScore() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            bird.width = Math.max(30, canvas.width * 0.06);
-            bird.height = Math.max(25, canvas.width * 0.05);
+            bird.width = Math.max(36, canvas.width * 0.072);
+            bird.height = Math.max(30, canvas.width * 0.06);
             bird.x = canvas.width * 0.15;
             
             pipeGap = Math.max(PIPE_GAP, canvas.height * 0.28);
@@ -779,7 +781,7 @@ playScore() {
             height: 30,
             velocity: 0,
             gravity: 0.3,
-            jump: -8
+            jump: -8.7
         };
 
         let pipes = [];
@@ -998,33 +1000,14 @@ playScore() {
             // Draw day/night background (handles transitions, stars, moon, and grass)
             drawBackground();
 
-            // Птичка
-            ctx.fillStyle = '#FF4081';
-            ctx.beginPath();
-            ctx.ellipse(
-                bird.x + bird.width/2,
-                bird.y + bird.height/2,
-                bird.width/2,
-                bird.height/2,
-                0, 0, Math.PI * 2
-            );
-            ctx.fill();
+            ctx.drawImage(
+    birdImage,
+    bird.x,
+    bird.y,
+    bird.width,
+    bird.height
+);
 
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.arc(bird.x + bird.width * 0.7, bird.y + bird.height * 0.3, bird.width * 0.07, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#FF9800';
-            ctx.beginPath();
-            ctx.moveTo(bird.x + bird.width, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width + bird.width * 0.4, bird.y + bird.height/2);
-            ctx.lineTo(bird.x + bird.width, bird.y + bird.height/2 + bird.height * 0.3);
-            ctx.fill();
 
             // Препятствия
             pipes.forEach(pipe => {
@@ -1338,3 +1321,4 @@ window.addEventListener('orientationchange', hideAddressBar);
 </script>
 </body>
 </html>
+
